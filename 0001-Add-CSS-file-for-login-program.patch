@@ -1,0 +1,118 @@
+From 947fdbfc7d2f6d7a975dcb0d7665af4251896fdd Mon Sep 17 00:00:00 2001
+From: Code Studio <codestudio@example.com>
+Date: Fri, 8 May 2026 07:30:22 +0000
+Subject: [PATCH] Add CSS file for login program
+
+---
+ Login.css  | 84 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Login.html |  2 +-
+ 2 files changed, 85 insertions(+), 1 deletion(-)
+ create mode 100644 Login.css
+
+diff --git a/Login.css b/Login.css
+new file mode 100644
+index 0000000..61f4a23
+--- /dev/null
++++ b/Login.css
+@@ -0,0 +1,84 @@
++/* Login.css - Styles for the Student Management System Login Page */
++
++body {
++    font-family: 'Arial', sans-serif;
++    background-color: #f4f4f4;
++    margin: 0;
++    padding: 0;
++    display: flex;
++    justify-content: center;
++    align-items: center;
++    height: 100vh;
++}
++
++.login-container {
++    background-color: white;
++    border-radius: 8px;
++    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
++    padding: 30px;
++    width: 350px;
++}
++
++.login-container h2 {
++    text-align: center;
++    color: #333;
++    margin-bottom: 25px;
++}
++
++.input-group {
++    margin-bottom: 20px;
++}
++
++.input-group label {
++    display: block;
++    margin-bottom: 8px;
++    color: #555;
++    font-weight: 500;
++}
++
++.input-group input {
++    width: 100%;
++    padding: 10px;
++    border: 1px solid #ddd;
++    border-radius: 4px;
++    font-size: 16px;
++    box-sizing: border-box;
++}
++
++.input-group input:focus {
++    border-color: #4d90fe;
++    outline: none;
++    box-shadow: 0 0 5px rgba(77, 144, 254, 0.2);
++}
++
++.input-group button {
++    width: 100%;
++    padding: 12px;
++    background-color: #4285f4;
++    color: white;
++    border: none;
++    border-radius: 4px;
++    cursor: pointer;
++    font-size: 16px;
++    font-weight: 500;
++    transition: background-color 0.3s;
++}
++
++.input-group button:hover {
++    background-color: #357ae8;
++}
++
++.links {
++    text-align: center;
++    margin-top: 15px;
++}
++
++.links a {
++    color: #4285f4;
++    text-decoration: none;
++    font-size: 14px;
++}
++
++.links a:hover {
++    text-decoration: underline;
++}
+\ No newline at end of file
+diff --git a/Login.html b/Login.html
+index 0e3cc20..cc297fe 100644
+--- a/Login.html
++++ b/Login.html
+@@ -4,7 +4,7 @@
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Student Management - Login</title>
+-    <!-- CSS styles have been removed -->
++    <link rel="stylesheet" href="Login.css">
+ </head>
+ <body>
+     <div class="login-container">
+-- 
+2.47.3
+
