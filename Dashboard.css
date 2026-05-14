@@ -1,0 +1,64 @@
+body {
+    font-family: Arial, sans-serif;
+    background: black;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    background: #283593;
+    color: #fff;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.container {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 2rem;
+}
+
+h2 {
+    color: #283593;
+}
+
+.card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.card {
+    background: #f0f1fa;
+    flex: 1 1 200px;
+    min-width: 200px;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(40,53,147,0.12);
+}
+
+.card-title {
+    font-weight: bold;
+    color: #3f51b5;
+    margin-bottom: 0.5rem;
+}
+
+.card-value {
+    font-size: 2rem;
+    color: #283593;
+}
+
+@media (max-width: 600px) {
+    .card-grid {
+        flex-direction: column;
+    }
+}
