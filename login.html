@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    body {
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .login-container {
+      background: #fff;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07), 0 1.5px 7px rgba(0,0,0,0.04);
+      width: 100%;
+      max-width: 350px;
+    }
+    .login-container h2 {
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #222;
+    }
+    label {
+      display: block;
+      margin-bottom: .4rem;
+      color: #555;
+      font-size: .98rem;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: .7rem;
+      margin-bottom: 1.3rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: #4A90E2;
+      box-shadow: 0 0 8px rgba(74,144,226,.1);
+    }
+    button[type="submit"] {
+      width: 100%;
+      background: #4A90E2;
+      color: #fff;
+      border: none;
+      padding: .8rem;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    button[type="submit"]:hover {
+      background: #357ab7;
+    }
+    .footer-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.2rem;
+      color: #4A90E2;
+      text-decoration: none;
+      font-size: 0.97rem;
+    }
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <form class="login-container" autocomplete="on">
+    <h2>Login</h2>
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" required autofocus>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit">Sign In</button>
+    <a href="#" class="footer-link">Forgot your password?</a>
+  </form>
+</body>
+</html>
