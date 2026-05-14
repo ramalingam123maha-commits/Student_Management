@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+        }
+        .sidebar {
+            width: 220px;
+            height: 100vh;
+            background: #263159;
+            position: fixed;
+            top: 0;
+            left: 0;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 16px;
+        }
+        .sidebar h2 {
+            margin-top: 0;
+            font-size: 1.6em;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .sidebar nav a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            margin: 18px 0;
+            padding: 6px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .sidebar nav a:hover {
+            background: #334073;
+        }
+        .main-content {
+            margin-left: 240px;
+            padding: 32px;
+        }
+        header {
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            padding: 18px 32px;
+            margin-bottom: 28px;
+            border-radius: 6px;
+        }
+        h1 {
+            margin: 0 0 8px 0;
+        }
+        @media (max-width: 700px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                padding: 16px;
+            }
+            .sidebar nav {
+                display: flex;
+            }
+            .sidebar nav a {
+                margin: 0 12px 0 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            header {
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>Student Dashboard</h2>
+        <nav>
+            <a href="#">Overview</a>
+            <a href="#">Students</a>
+            <a href="#">Courses</a>
+            <a href="#">Attendance</a>
+            <a href="#">Settings</a>
+        </nav>
+    </aside>
+    <div class="main-content">
+        <header>
+            <h1>Welcome to the Dashboard</h1>
+            <p>Your overview & quick actions</p>
+        </header>
+        <section>
+            <h2>Statistics</h2>
+            <ul>
+                <li>Total Students: --</li>
+                <li>Active Courses: --</li>
+                <li>Attendance Rate: --</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Recent Activity</h2>
+            <p>(No recent activity to show -- placeholder content.)</p>
+        </section>
+    </div>
+</body>
+</html>
