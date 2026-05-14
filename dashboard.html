@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fb;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 32px 48px;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 32px 0;
+        }
+        .stat {
+            background: #e9ecef;
+            padding: 24px 32px;
+            border-radius: 7px;
+            text-align: center;
+            width: 160px;
+        }
+        .stat h2 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: #4a90e2;
+        }
+        .stat p {
+            margin: 8px 0 0 0;
+            color: #555;
+            font-size: 1.1rem;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 32px;
+        }
+        .actions button {
+            margin: 0 8px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            background: #4a90e2;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .actions button:hover {
+            background: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Student Management Dashboard</h1>
+        <div class="stats">
+            <div class="stat">
+                <h2>-</h2>
+                <p>Total Students</p>
+            </div>
+            <div class="stat">
+                <h2>-</h2>
+                <p>Total Courses</p>
+            </div>
+            <div class="stat">
+                <h2>-</h2>
+                <p>Active Enrollments</p>
+            </div>
+        </div>
+        <div class="actions">
+            <button>Add Student</button>
+            <button>View Students</button>
+            <button>Add Course</button>
+            <button>View Courses</button>
+        </div>
+    </div>
+</body>
+</html>
