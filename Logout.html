@@ -1,12 +1,21 @@
+<!-- Logout Page HTML -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Character encoding and compatibility settings -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Page title -->
     <title>Logout</title>
+    
+    <!-- Link to external CSS stylesheet -->
     <link rel="stylesheet" href="login.css">
+    
+    <!-- Internal CSS styles for the logout page -->
     <style>
+        /* Body styling - centers content vertically and horizontally */
         body {
             display: flex;
             justify-content: center;
@@ -14,6 +23,8 @@
             min-height: 100vh;
             background: #f5f6fa;
         }
+        
+        /* Main logout container styling */
         .logout-container {
             background: #fff;
             padding: 2rem 3rem;
@@ -22,14 +33,20 @@
             text-align: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
+        /* Heading styling for logout message */
         .logout-container h1 {
             color: #222f5a;
             margin-bottom: 1rem;
         }
+        
+        /* Paragraph text styling for confirmation message */
         .logout-container p {
             color: #333;
             margin-bottom: 1.5rem;
         }
+        
+        /* Link styling for return to login button */
         .logout-container a {
             text-decoration: none;
             color: #fff;
@@ -38,15 +55,23 @@
             border-radius: 4px;
             transition: background 0.2s;
         }
+        
+        /* Hover effect for the login link */
         .logout-container a:hover {
             background: #293c6e;
         }
     </style>
 </head>
 <body>
+    <!-- Main logout container with confirmation message -->
     <div class="logout-container">
+        <!-- Logout confirmation heading -->
         <h1>Logged Out</h1>
+        
+        <!-- Logout confirmation message -->
         <p>You have been successfully logged out of your account.</p>
+        
+        <!-- Link to return to the login page -->
         <a href="login.html">Return to Login</a>
     </div>
 </body>
