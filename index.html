@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Studio Kanban — Trello-Style Ultimate Board</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Sortable.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <!-- Custom Micro-Styles -->
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.6);
+        }
+        
+        /* Drag-and-Drop Floating Visual Animations */
+        .card-ghost {
+            opacity: 0.3 !important;
+            background-color: #cbd5e1 !important;
+            border: 2px dashed #6366f1 !important;
+            transform: scale(0.97) !important;
+        }
+        .dark .card-ghost {
+            background-color: #1e293b !important;
+            border: 2px dashed #818cf8 !important;
+        }
+        .column-ghost {
+            opacity: 0.4 !important;
+            border: 2px dashed #4f46e5 !important;
+            background: rgba(79, 70, 229, 0.1) !important;
+            border-radius: 1rem !important;
+        }
+        .card-chosen {
+            transform: rotate(-1.5deg) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15) !important;
+        }
+        .column-chosen {
+            transform: rotate(-0.5deg) scale(1.01);
+            opacity: 0.95;
+        }
+        
+        /* Disable text selection during drag-and-drop */
+        .sortable-drag {
+            cursor: grabbing !important;
+        }
+
+        /* Glassmorphism overlays */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300 antialiased overflow-hidden flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="h-16 px-6 glass-panel border-b border-slate-200/50 dark:border-slate-800/80 flex items-center justify-between z-40 transition-colors duration-300 shrink-0">
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-square-poll-horizontal text-lg text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                    Code Studio Kanban
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">v1.2</span>
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Streamline tasks & agile velocity</p>
+            </div>
+        </div>
+
+        <!-- Central Smart Filters & Search Bar -->
+        <div class="hidden md:flex items-center gap-3 max-w-xl w-full mx-6">
+            <div class="relative flex-grow">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                </span>
+                <input type="text" id="boardSearch" oninput="triggerSearchAndFilters()" placeholder="Locate tasks, tags, descriptions..." class="w-full pl-9 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 hover:bg-white dark:hover:bg-slate-950 focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none transition-all duration-200 placeholder-slate-400 dark:placeholder-slate-500">
+                <button onclick="clearSearch()" id="searchClearBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hidden">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+            </div>
+            
+            <!-- Priority Filter Dropdown -->
+            <div class="relative shrink-0">
+                <select id="priorityFilter" onchange="triggerSearchAndFilters()" class="appearance-none pl-3 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500 transition-all duration-200 cursor-pointer text-slate-600 dark:text-slate-200">
+                    <option value="all">⚡ All Priority</option>
+                    <option value="high">🚨 High Priority</option>
+                    <option value="medium">🟡 Medium Priority</option>
+                    <option value="low">🟢 Low Priority</option>
+                </select>
+                <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Right Side Utility Controls & Toggles -->
+        <div class="flex items-center gap-3">
+            <!-- Global Stats Toggle -->
+            <button onclick="toggleStatsDrawer()" title="View Board Analytics" class="hover:bg-slate-100 dark:hover:bg-slate-800/80 p-2.5 rounded-xl transition-all duration-200 relative text-slate-600 dark:text-slate-300">
+                <i class="fa-solid fa-chart-simple text-sm"></i>
+                <span id="pendingAlertDot" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 animate-ping hidden"></span>
+            </button>
+
+            <!-- Board Background & Themes Selection Popover -->
+            <div class="relative">
+                <button onclick="toggleThemeDropdown()" id="themeMenuBtn" title="Customize Backdrop Theme" class="hover:bg-slate-100 dark:hover:bg-slate-800/80 p-2.5 rounded-xl transition-all duration-200 text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-palette text-sm"></i>
+                </button>
+                
+                <!-- Customize Themes Bubble -->
+                <div id="themeDropdown" class="hidden absolute right-0 mt-3 p-4 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900 z-50 animate-fade-in">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Custom Backdrop Themes</h3>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <button onclick="changeBackdrop('sunset')" class="h-10 rounded-lg bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500 transition hover:scale-105" title="Sunset Spark"></button>
+                        <button onclick="changeBackdrop('nebula')" class="h-10 rounded-lg bg-gradient-to-r from-purple-800 via-violet-900 to-indigo-800 transition hover:scale-105" title="Cosmic Nebula"></button>
+                        <button onclick="changeBackdrop('ocean')" class="h-10 rounded-lg bg-gradient-to-tl from-teal-500 to-blue-600 transition hover:scale-105" title="Ocean Calm"></button>
+                        <button onclick="changeBackdrop('emerald')" class="h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 transition hover:scale-105" title="Forest Canopy"></button>
+                        <button onclick="changeBackdrop('cyberpunk')" class="h-10 rounded-lg bg-gradient-to-r from-slate-900 via-purple-950 to-slate-950 border border-pink-500/30 transition hover:scale-105" title="Midnight Cyberpunk"></button>
+                        <button onclick="changeBackdrop('slate')" class="h-10 rounded-lg bg-slate-900 dark:bg-slate-950 border border-slate-800 transition hover:scale-105" title="Minimalist dark"></button>
+                        <button onclick="changeBackdrop('light-slate')" class="h-10 rounded-lg bg-slate-50 border border-slate-200 shadow-sm transition hover:scale-105" title="Crisp Slate Light"></button>
+                        <button onclick="changeBackdrop('dark-indigo')" class="h-10 rounded-lg bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 transition hover:scale-105" title="Premium Indigo"></button>
+                    </div>
+
+                    <div class="h-[1px] bg-slate-100 dark:bg-slate-800 mb-3"></div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Export/Import State</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="exportBoardState()" title="Export JSON" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-xs transition font-semibold text-slate-700 dark:text-slate-300">Export</button>
+                            <button onclick="importBoardStateTrigger()" title="Import JSON" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-xs transition font-semibold text-slate-700 dark:text-slate-300">Import</button>
+                            <input type="file" id="importFileInput" onchange="handleFileImport(event)" class="hidden" accept=".json">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dark/Light Theme Switcher Toggle -->
+            <button onclick="toggleDarkMode()" id="darkModeBtn" title="Toggle Light / Dark Mode" class="hover:bg-slate-100 dark:hover:bg-slate-800/80 p-2.5 rounded-xl transition-all duration-200 text-slate-600 dark:text-slate-300">
+                <i class="fa-solid fa-moon text-sm hidden dark:block"></i>
+                <i class="fa-solid fa-sun text-sm block dark:hidden text-amber-500"></i>
+            </button>
+
+            <!-- Reset All Board CTA -->
+            <button onclick="confirmResetAll()" title="Reset Board Demo Data" class="hover:bg-red-50 dark:hover:bg-red-950/30 p-2.5 rounded-xl transition-all duration-200 text-red-500">
+                <i class="fa-solid fa-trash-can-arrow-up text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Project Sub-header: Filter layout for mobile only -->
+    <div class="md:hidden glass-panel px-4 py-2 border-b border-slate-200/50 dark:border-slate-800/80 flex flex-col gap-2 shrink-0">
+        <div class="relative flex-grow">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </span>
+            <input type="text" id="mobileSearch" oninput="triggerMobileSearchAndFilter()" placeholder="Search tasks..." class="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500">
+        </div>
+    </div>
+
+    <!-- MAIN CORE BOARD CONTENT -->
+    <main id="boardBackdrop" class="flex-grow flex flex-col overflow-hidden transition-all duration-500 select-none bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500">
+        <!-- Scrollable Columns Wrapper Container -->
+        <div id="board-columns" class="flex-grow overflow-x-auto p-6 flex gap-6 items-start">
+            <!-- Dynamic Kanban columns will be populated here -->
+        </div>
+    </main>
+
+    <!-- INLINE PANEL: Live Board Stats Panel Container -->
+    <div id="statsDrawer" class="fixed right-0 top-16 bottom-0 w-80 bg-white/95 dark:bg-slate-900/95 border-l border-slate-200/60 dark:border-slate-800 z-30 shadow-2xl transition-all duration-300 transform translate-x-full overflow-y-auto">
+        <div class="p-5">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-indigo-500"></i> Board Analytics
+                </h2>
+                <button onclick="toggleStatsDrawer()" class="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+
+            <div class="space-y-5">
+                <!-- Project Status Stats -->
+                <div class="bg-indigo-500/5 dark:bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/10">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-1">Total Active Tasks</div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="statTotalCount" class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">0</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500">total created cards</span>
+                    </div>
+                </div>
+
+                <!-- Progress indicators -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 mb-2">Column Distribution</h3>
+                    <div id="columnStatsList" class="space-y-2">
+                        <!-- Dynamic columns summary -->
+                    </div>
+                </div>
+
+                <!-- Priority Stats -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 mb-2">Priority Velocity</h3>
+                    <div class="space-y-2 bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[8px] text-red-500"></i> High Priority</span>
+                            <span id="statHighCount" class="font-semibold text-slate-700 dark:text-slate-300">0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[8px] text-amber-500"></i> Medium Priority</span>
+                            <span id="statMediumCount" class="font-semibold text-slate-700 dark:text-slate-300">0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[8px] text-emerald-500"></i> Low Priority</span>
+                            <span id="statLowCount" class="font-semibold text-slate-700 dark:text-slate-300">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subtask Accomplishment rate -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 mb-2">Subtask Accomplishment</h3>
+                    <div class="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span id="statSubtaskPercent" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">0%</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400" id="statSubtaskFractions">0/0 completed</span>
+                        </div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                            <div id="statSubtaskProgressBar" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overdue Tasks alerts -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase text-slate-400 dark:text-slate-500 mb-2">Critical Alerts</h3>
+                    <div id="overdueAlertContainer" class="bg-red-500/5 dark:bg-red-500/10 p-3 rounded-xl border border-red-500/10 flex items-start gap-2 text-xs">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm mt-0.5"></i>
+                        <div>
+                            <div class="font-semibold text-red-600 dark:text-red-400" id="statOverdueTitle">0 Overdue Tasks</div>
+                            <p class="text-slate-500 dark:text-slate-400 mt-0.5">Prioritize overdue due dates to maximize your sprint delivery cycle velocity.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- COMPLETE EDIT / CREATE TASK DIALOG MODAL -->
+    <div id="cardModal" class="fixed inset-0 bg-slate-950/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200 opacity-0 pointer-events-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-slate-200/50 dark:border-slate-800/60 flex flex-col transform translate-y-4 transition-transform duration-200">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="p-1 rounded bg-indigo-500/10 text-indigo-500"><i class="fa-solid fa-file-pen text-sm"></i></span>
+                    <h2 id="modalMainHeading" class="font-bold text-slate-800 dark:text-white">Edit Task</h2>
+                </div>
+                <button onclick="closeCardModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Form Body (Scrollable) -->
+            <div class="px-6 py-4 overflow-y-auto space-y-4 flex-grow text-sm">
+                <!-- Title Input -->
+                <div>
+                    <label for="modalCardTitle" class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">Task Title <span class="text-red-500">*</span></label>
+                    <input type="text" id="modalCardTitle" placeholder="What needs to be done?" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none transition-colors duration-200">
+                </div>
+
+                <!-- Priority level radio-style buttons -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">Priority Urgency</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" onclick="setModalPriorityRaw('low')" id="prioBtn-low" class="prio-select-btn border border-slate-200 dark:border-slate-800 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-150 hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <i class="fa-solid fa-circle text-[8px] text-emerald-500"></i> Low Priority
+                        </button>
+                        <button type="button" onclick="setModalPriorityRaw('medium')" id="prioBtn-medium" class="prio-select-btn border border-slate-200 dark:border-slate-800 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-150 hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <i class="fa-solid fa-circle text-[8px] text-amber-500"></i> Medium
+                        </button>
+                        <button type="button" onclick="setModalPriorityRaw('high')" id="prioBtn-high" class="prio-select-btn border border-slate-200 dark:border-slate-800 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-150 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold">
+                            <i class="fa-solid fa-circle text-[8px] text-red-500"></i> High Priority
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Row: Due Date & Tags inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="modalCardDueDate" class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">Due Date Limit</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none"><i class="fa-regular fa-calendar-days text-sm"></i></span>
+                            <input type="date" id="modalCardDueDate" class="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none transition-colors duration-200 text-slate-700 dark:text-slate-200">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="modalCardTags" class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">Tags (Comma Separated)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none"><i class="fa-solid fa-tags text-sm"></i></span>
+                            <input type="text" id="modalCardTags" placeholder="Design, Frontend, Feature" class="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none transition-colors duration-200">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description Textarea -->
+                <div>
+                    <label for="modalCardDescription" class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">Task Description</label>
+                    <textarea id="modalCardDescription" rows="3" placeholder="Provide operational detail parameters..." class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none transition-colors duration-200 resize-none"></textarea>
+                </div>
+
+                <!-- Complete Interactive Subtasks List Checklist manager -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Subtasks Checklist</label>
+                    
+                    <!-- Progress meter -->
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="modalSubtasksFraction" class="text-xs text-slate-500 font-medium">0/0 completed</span>
+                        <div class="w-3/4 max-w-sm bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div id="modalSubtasksProgressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic subtask items content -->
+                    <div id="modalSubtasksList" class="space-y-1.5 max-h-36 overflow-y-auto mb-2 pr-1">
+                        <!-- Subtask item nodes injected here -->
+                    </div>
+
+                    <!-- New subtask input -->
+                    <div class="flex gap-2">
+                        <input type="text" id="newSubtaskTextInput" onkeypress="handleNewSubtaskKeypress(event)" placeholder="Define sub-deliverable task..." class="flex-grow px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors duration-200">
+                        <button onclick="addModalSubtaskFromInput()" class="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 rounded-xl text-xs font-semibold cursor-pointer transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Action Buttons Footer -->
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950/30 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between shrink-0">
+                <!-- Delete action button -->
+                <button id="modalDeleteBtn" onclick="deleteModalActiveTask()" class="px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 hover:text-red-600 font-semibold rounded-xl text-xs cursor-pointer transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash"></i> Delete Task
+                </button>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="closeCardModal()" class="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs cursor-pointer transition">
+                        Cancel
+                    </button>
+                    <button onclick="saveModalActiveTask()" class="px-5 py-2 bg-gradient-to-tr from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/25 transition duration-150 text-xs cursor-pointer">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CORE APPLICATION JAVASCRIPT ENGINE -->
+    <script>
+        // MASTER DATA STRUCTURE STATE (Trello board representation)
+        let boardData = {
+            columns: [],
+            cards: {},
+            theme: "sunset",
+            darkMode: true
+        };
+
+        // DEFAULT PRE-FILL / DEMO KANBAN BOARD DATA
+        const demoBoardData = {
+            columns: [
+                {
+                    id: "col-backlog",
+                    title: "Backlog 📋",
+                    cardIds: ["task-stripe", "task-tests"]
+                },
+                {
+                    id: "col-todo",
+                    title: "To Do 🎯",
+                    cardIds: ["task-mockups", "task-refactor"]
+                },
+                {
+                    id: "col-active",
+                    title: "In Progress ⚡",
+                    cardIds: ["task-node-server"]
+                },
+                {
+                    id: "col-done",
+                    title: "Done 🎉",
+                    cardIds: ["task-init-repo"]
+                }
+            ],
+            cards: {
+                "task-mockups": {
+                    id: "task-mockups",
+                    title: "Design Landing Page & Brand Mockups",
+                    description: "Produce comprehensive high-fidelity vector outlines in Figma using the deep royal purple and sunset visual accent guidelines.",
+                    priority: "high",
+                    dueDate: getRelDateString(2),
+                    tags: ["Design", "Figma"],
+                    subtasks: [
+                        { id: "sub-1", text: "Choose Typography", completed: true },
+                        { id: "sub-2", text: "Map Grid Layout Templates", completed: true },
+                        { id: "sub-3", text: "Finalize High-Fidelity UI", completed: false }
+                    ]
+                },
+                "task-node-server": {
+                    id: "task-node-server",
+                    title: "Setup Node.js Backend Server API",
+                    description: "Incorporate Express router middleware modules, configure CORS permissions, and establish the persistent database schema boundary.",
+                    priority: "medium",
+                    dueDate: getRelDateString(-1), // overdue!
+                    tags: ["Backend", "Nodejs"],
+                    subtasks: [
+                        { id: "sub-4", text: "Initialize folder directory scaffolding", completed: true },
+                        { id: "sub-5", text: "Integrate database storage drivers", completed: false },
+                        { id: "sub-6", text: "Map authentication login routes", completed: false }
+                    ]
+                },
+                "task-stripe": {
+                    id: "task-stripe",
+                    title: "Integrate Stripe Transaction Webhook",
+                    description: "Listen to payment success callbacks to automatically provision cloud billing licenses and write user invoices to logs.",
+                    priority: "high",
+                    dueDate: getRelDateString(6),
+                    tags: ["Stripe", "Finance"],
+                    subtasks: []
+                },
+                "task-tests": {
+                    id: "task-tests",
+                    title: "Draft Unit and Integration Coverage",
+                    description: "Incorporate Jest mocking utilities to isolate third-party service bounds. Aim for 85% block and statement coverage.",
+                    priority: "low",
+                    dueDate: getRelDateString(14),
+                    tags: ["QA", "Testing"],
+                    subtasks: [
+                        { id: "sub-7", text: "Define testing strategy criteria", completed: true },
+                        { id: "sub-8", text: "Mock core external email services", completed: false }
+                    ]
+                },
+                "task-refactor": {
+                    id: "task-refactor",
+                    title: "Decompartmentalize Redux State Store",
+                    description: "Migrate traditional reactive state trees down to RTK features folders structure. Eliminate unnecessary duplicate rendering hooks.",
+                    priority: "medium",
+                    dueDate: getRelDateString(8),
+                    tags: ["Refactoring", "Frontend"],
+                    subtasks: []
+                },
+                "task-init-repo": {
+                    id: "task-init-repo",
+                    title: "Initialize Secure Git Workspace",
+                    description: "Setup continuous delivery actions, build quality gates, audit dependencies, and commit original structural template layouts.",
+                    priority: "low",
+                    dueDate: getRelDateString(-10),
+                    tags: ["DevOps", "GitHub"],
+                    subtasks: [
+                        { id: "sub-9", text: "Assemble repo folder skeleton", completed: true },
+                        { id: "sub-10", text: "Setup GitHub Actions runner workflow", completed: true }
+                    ]
+                }
+            ],
+            theme: "sunset",
+            darkMode: true
+        };
+
+        // Utility: Get date offset string
+        function getRelDateString(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return d.toISOString().split('T')[0];
+        }
+
+        // Active Card being edited/loaded context ID inside the Modal
+        let activeModalCardId = null;
+        let activeModalCardColumnId = null;
+        let tempModalSubtasks = [];
+        let curModalPriority = 'medium';
+
+        // Initialize Core Board Orchestration
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStateFromStorage();
+            applyDarkModeStyle();
+            applyThemeBackdrop();
+            renderBoard();
+            
+            // Listen for window clicks to close popovers on outer click
+            window.addEventListener('click', (e) => {
+                const dropMenu = document.getElementById('themeDropdown');
+                const menuBtn = document.getElementById('themeMenuBtn');
+                if (dropMenu && !dropMenu.classList.contains('hidden') && !dropMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+                    dropMenu.classList.add('hidden');
+                }
+            });
+        });
+
+        // Toggle Theme Popover Bubble
+        function toggleThemeDropdown() {
+            const dropMenu = document.getElementById('themeDropdown');
+            dropMenu.classList.toggle('hidden');
+        }
+
+        // Dark/Light Mode switches
+        function toggleDarkMode() {
+            boardData.darkMode = !boardData.darkMode;
+            applyDarkModeStyle();
+            saveBoardState();
+        }
+
+        function applyDarkModeStyle() {
+            if (boardData.darkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Change Canvas Backdrop style
+        function changeBackdrop(themeName) {
+            boardData.theme = themeName;
+            applyThemeBackdrop();
+            saveBoardState();
+        }
+
+        function applyThemeBackdrop() {
+            const el = document.getElementById('boardBackdrop');
+            if (!el) return;
+
+            // Remove all core gradient classes
+            el.className = "flex-grow flex flex-col overflow-hidden transition-all duration-500 select-none";
+
+            switch (boardData.theme) {
+                case "sunset":
+                    el.classList.add("bg-gradient-to-tr", "from-pink-500", "via-red-500", "to-yellow-500");
+                    break;
+                case "nebula":
+                    el.classList.add("bg-gradient-to-r", "from-purple-800", "via-violet-900", "to-indigo-800");
+                    break;
+                case "ocean":
+                    el.classList.add("bg-gradient-to-tl", "from-teal-500", "to-blue-600");
+                    break;
+                case "emerald":
+                    el.classList.add("bg-gradient-to-br", "from-emerald-500", "to-teal-700");
+                    break;
+                case "cyberpunk":
+                    el.classList.add("bg-gradient-to-r", "from-slate-900", "via-purple-950", "to-slate-950", "border-t", "border-pink-500/20");
+                    break;
+                case "slate":
+                    el.classList.add("bg-slate-900");
+                    break;
+                case "light-slate":
+                    el.classList.add("bg-slate-100");
+                    break;
+                case "dark-indigo":
+                    el.classList.add("bg-gradient-to-br", "from-indigo-950", "via-slate-900", "to-blue-950");
+                    break;
+                default:
+                    el.classList.add("bg-gradient-to-tr", "from-indigo-500", "to-purple-600");
+            }
+        }
+
+        // Save state to localStorage database
+        function saveBoardState() {
+            localStorage.setItem('code_studio_kanban_data', JSON.stringify(boardData));
+            renderStats();
+        }
+
+        // Load state from localStorage on startup
+        function loadStateFromStorage() {
+            const raw = localStorage.getItem('code_studio_kanban_data');
+            if (raw) {
+                try {
+                    boardData = JSON.parse(raw);
+                    // Ensure defensive property checks
+                    if (!boardData.columns || !boardData.cards) {
+                        loadDemoState();
+                    }
+                } catch (err) {
+                    loadDemoState();
+                }
+            } else {
+                loadDemoState();
+            }
+        }
+
+        // Fresh load of sample demo board data
+        function loadDemoState() {
+            // Shallow clone demoBoardData to avoid direct mutations
+            boardData = JSON.parse(JSON.stringify(demoBoardData));
+            saveBoardState();
+        }
+
+        // Confirm Board Reset dialog
+        function confirmResetAll() {
+            if (confirm("Are you absolutely sure you want to reset this board and load original standard demo deliverables? No previous state will be restored.")) {
+                loadDemoState();
+                applyThemeBackdrop();
+                applyDarkModeStyle();
+                renderBoard();
+            }
+        }
+
+        // Local Storage State Reconstruction Scanner (By querying actual DOM elements layout order)
+        function saveBoardStateFromDOM() {
+            const columnsContainer = document.getElementById('board-columns');
+            if (!columnsContainer) return;
+
+            const newColumns = [];
+            const colElements = columnsContainer.querySelectorAll('.column-container');
+            
+            colElements.forEach(colEl => {
+                const columnId = colEl.getAttribute('data-column-id');
+                const titleHeadingEl = colEl.querySelector('.column-title-heading');
+                const colTitle = titleHeadingEl ? titleHeadingEl.innerText.trim() : "Custom Stage";
+                
+                const cardIds = [];
+                const cardElList = colEl.querySelectorAll('.card-item');
+                cardElList.forEach(cardEl => {
+                    const cardId = cardEl.getAttribute('data-card-id');
+                    if (cardId) cardIds.push(cardId);
+                });
+
+                newColumns.push({
+                    id: columnId,
+                    title: colTitle,
+                    cardIds: cardIds
+                });
+            });
+
+            boardData.columns = newColumns;
+            localStorage.setItem('code_studio_kanban_data', JSON.stringify(boardData));
+            renderStats();
+        }
+
+        // Search engine inputs & key callbacks
+        function clearSearch() {
+            document.getElementById('boardSearch').value = '';
+            document.getElementById('mobileSearch').value = '';
+            document.getElementById('searchClearBtn').classList.add('hidden');
+            renderBoard();
+        }
+
+        function triggerSearchAndFilters() {
+            const query = document.getElementById('boardSearch').value.trim();
+            const btn = document.getElementById('searchClearBtn');
+            if (query.length > 0) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+            renderBoard();
+        }
+
+        function triggerMobileSearchAndFilter() {
+            const mobVal = document.getElementById('mobileSearch').value.trim();
+            document.getElementById('boardSearch').value = mobVal;
+            renderBoard();
+        }
+
+        // ANALYTICS & METADATA STATS PANEL WRAPPER RENDERING
+        function renderStats() {
+            const totalCountEl = document.getElementById('statTotalCount');
+            const totalCount = Object.keys(boardData.cards).length;
+            if (totalCountEl) totalCountEl.innerText = totalCount;
+
+            // Compute priority rates
+            let high = 0, medium = 0, low = 0;
+            let subtotal = 0, completed = 0;
+            let overdue = 0;
+            const now = new Date().toISOString().split('T')[0];
+
+            Object.values(boardData.cards).forEach(card => {
+                if (card.priority === 'high') high++;
+                if (card.priority === 'medium') medium++;
+                if (card.priority === 'low') low++;
+
+                if (card.dueDate && card.dueDate < now) {
+                    // Overdue. But if it belongs to a Done column, we can bypass or count only active overdue
+                    const doneCols = boardData.columns.filter(c => c.title.toLowerCase().includes('done') || c.id.toLowerCase().includes('done'));
+                    const isDoneCard = doneCols.some(dc => dc.cardIds.includes(card.id));
+                    if (!isDoneCard) {
+                        overdue++;
+                    }
+                }
+
+                if (card.subtasks && card.subtasks.length > 0) {
+                    card.subtasks.forEach(s => {
+                        subtotal++;
+                        if (s.completed) completed++;
+                    });
+                }
+            });
+
+            // Update DOM Counts
+            setValueToId('statHighCount', high);
+            setValueToId('statMediumCount', medium);
+            setValueToId('statLowCount', low);
+
+            const pendingAlertDot = document.getElementById('pendingAlertDot');
+            if (overdue > 0) {
+                setValueToId('statOverdueTitle', `${overdue} Overdue Task${overdue > 1 ? 's' : ''}`);
+                document.getElementById('overdueAlertContainer').classList.remove('hidden');
+                if (pendingAlertDot) pendingAlertDot.classList.remove('hidden');
+            } else {
+                setValueToId('statOverdueTitle', `0 Overdue Tasks`);
+                document.getElementById('overdueAlertContainer').classList.add('hidden');
+                if (pendingAlertDot) pendingAlertDot.classList.add('hidden');
+            }
+
+            // Subtask fractions
+            if (subtotal > 0) {
+                const subRate = Math.round((completed / subtotal) * 100);
+                setValueToId('statSubtaskPercent', `${subRate}%`);
+                setValueToId('statSubtaskFractions', `${completed}/${subtotal} completed`);
+                const bar = document.getElementById('statSubtaskProgressBar');
+                if (bar) bar.style.width = `${subRate}%`;
+            } else {
+                setValueToId('statSubtaskPercent', `0%`);
+                setValueToId('statSubtaskFractions', `No subtasks configured`);
+                const bar = document.getElementById('statSubtaskProgressBar');
+                if (bar) bar.style.width = `0%`;
+            }
+
+            // Calculate columns summary lists inside analytics
+            const colStatsList = document.getElementById('columnStatsList');
+            if (colStatsList) {
+                colStatsList.innerHTML = '';
+                boardData.columns.forEach(col => {
+                    const cardsInColCount = col.cardIds.length;
+                    const percent = totalCount > 0 ? Math.round((cardsInColCount / totalCount) * 100) : 0;
+                    
+                    const el = document.createElement('div');
+                    el.className = "text-xs space-y-1";
+                    el.innerHTML = `
+                        <div class="flex justify-between font-medium">
+                            <span class="truncate text-slate-600 dark:text-slate-300">${col.title}</span>
+                            <span class="text-slate-500 font-bold">${cardsInColCount} cards (${percent}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1">
+                            <div class="bg-indigo-500 h-1 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    `;
+                    colStatsList.appendChild(el);
+                });
+            }
+        }
+
+        function setValueToId(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
+        }
+
+        function toggleStatsDrawer() {
+            const dr = document.getElementById('statsDrawer');
+            if (dr) {
+                dr.classList.toggle('translate-x-full');
+            }
+        }
+
+        // MAIN BOOTSTRAP: RENDERING COLUMNS AND CARDS ON CANVAS
+        let activeSortableInstances = [];
+        
+        function renderBoard() {
+            const parent = document.getElementById('board-columns');
+            if (!parent) return;
+
+            // Clear old instances in Memory to prevent leakage
+            activeSortableInstances.forEach(inst => inst.destroy());
+            activeSortableInstances = [];
+
+            parent.innerHTML = '';
+
+            const searchQuery = document.getElementById('boardSearch').value.toLowerCase().trim();
+            const priorityVal = document.getElementById('priorityFilter').value;
+
+            // Iterating inside active boardData columns
+            boardData.columns.forEach(column => {
+                const colNode = document.createElement('div');
+                colNode.className = "column-container flex-shrink-0 w-80 max-h-full rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-slate-50/95 dark:bg-slate-900/90 shadow-sm flex flex-col focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all duration-300";
+                colNode.setAttribute('data-column-id', column.id);
+
+                // Build Column Header Element
+                const headerNode = document.createElement('div');
+                headerNode.className = "px-4.5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/30 cursor-default select-none shrink-0";
+                
+                // Header Inner Content
+                headerNode.innerHTML = `
+                    <div class="flex items-center gap-2 max-w-[70%]">
+                        <div class="column-drag-handle p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing transition" title="Hold or drag stage column order">
+                            <i class="fa-solid fa-grip-vertical text-xs"></i>
+                        </div>
+                        <span id="colTitleDisplay-${column.id}" onclick="enterInlineColRename('${column.id}')" class="column-title-heading font-bold text-sm text-slate-800 dark:text-slate-100 truncate hover:bg-slate-200/50 dark:hover:bg-slate-800/50 px-1.5 py-0.5 rounded cursor-text" title="Click to rename stage list">
+                            ${column.title}
+                        </span>
+                        <input type="text" id="colTitleInput-${column.id}" onblur="saveInlineColRename('${column.id}')" onkeypress="handleColRenameKey('${column.id}', event)" class="hidden w-full px-2 py-0.5 text-sm font-bold bg-white dark:bg-slate-950 border border-indigo-500 focus:outline-none rounded text-slate-800 dark:text-white" value="${column.title}">
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-850 px-2 py-0.5 rounded-full border border-slate-200/20">${column.cardIds.length}</span>
+                        
+                        <!-- Mini Dropdown toggle button -->
+                        <div class="relative inline-block text-left">
+                            <button onclick="toggleColDropdown('${column.id}')" id="colMenuBtn-${column.id}" class="hover:bg-slate-200 dark:hover:bg-slate-800 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
+                                <i class="fa-solid fa-ellipsis-vertical text-xs"></i>
+                            </button>
+                            <!-- Mini options popup element -->
+                            <div id="colMenuDropdown-${column.id}" class="hidden absolute right-0 mt-1.5 w-48 rounded-xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-xl z-30 py-1.5 animate-fade-in text-xs">
+                                <button onclick="sortStageCardsByDueDate('${column.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock"></i> Sort by Due Date
+                                </button>
+                                <button onclick="sortStageCardsByPriority('${column.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-exclamation"></i> Sort by Priority
+                                </button>
+                                <hr class="border-slate-100 dark:border-slate-800/60 my-1">
+                                <button onclick="clearStageCards('${column.id}')" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-broom font-semibold"></i> Empty All Tasks
+                                </button>
+                                <button onclick="deleteColumnAction('${column.id}')" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/25 text-red-500 transition flex items-center gap-1.5 font-semibold">
+                                    <i class="fa-solid fa-trash-can"></i> Delete Stage
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Inside Stage Card List Container
+                const cardListNode = document.createElement('div');
+                cardListNode.className = "card-list px-3 py-1.5 flex-grow space-y-3 overflow-y-auto pb-4 max-h-[calc(100vh-250px)]";
+                cardListNode.setAttribute('data-column-id', column.id);
+
+                // Append filtered cards inside current stage
+                column.cardIds.forEach(cardId => {
+                    const card = boardData.cards[cardId];
+                    if (!card) return;
+
+                    // FILTER MATCH CHECKS
+                    if (searchQuery) {
+                        const inTitle = card.title.toLowerCase().includes(searchQuery);
+                        const inDesc = card.description.toLowerCase().includes(searchQuery);
+                        const inTags = card.tags.some(tag => tag.toLowerCase().includes(searchQuery));
+                        if (!inTitle && !inDesc && !inTags) return; // mismatch
+                    }
+
+                    if (priorityVal !== 'all') {
+                        if (card.priority !== priorityVal) return;
+                    }
+
+                    // Create Single Card Item Node
+                    const cardItemNode = document.createElement('div');
+                    cardItemNode.className = "card-item group relative bg-white dark:bg-slate-950 border border-slate-200/40 dark:border-slate-850 hover:border-slate-300 dark:hover:border-slate-700 rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all duration-200 flex flex-col gap-2.5";
+                    cardItemNode.setAttribute('data-card-id', cardId);
+                    cardItemNode.setAttribute('onclick', `openEditCardModal('${cardId}', '${column.id}')`);
+
+                    // Resolve priority color badges
+                    let prioColorClass = "bg-slate-105 text-slate-600 dark:bg-slate-900 border-slate-200";
+                    if (card.priority === 'high') {
+                        prioColorClass = "bg-red-50 dark:bg-red-950/45 text-red-600 dark:text-red-400 border-red-500/10";
+                    } else if (card.priority === 'medium') {
+                        prioColorClass = "bg-amber-50 dark:bg-amber-950/45 text-amber-600 dark:text-amber-400 border-amber-500/10";
+                    } else if (card.priority === 'low') {
+                        prioColorClass = "bg-emerald-50 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400 border-emerald-500/10";
+                    }
+
+                    // Resolve Due Date Overdue warnings
+                    let calendarBadge = '';
+                    if (card.dueDate) {
+                        const nowDay = new Date().toISOString().split('T')[0];
+                        const dateObj = new Date(card.dueDate);
+                        
+                        // Human readable format short
+                        const formatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                        
+                        let dateStyle = "bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400";
+                        let relativeText = "";
+                        
+                        if (card.dueDate < nowDay) {
+                            // If is done column, do not yell. Otherwise highlight red!
+                            const colTitleLower = column.title.toLowerCase();
+                            if (colTitleLower.includes('done')) {
+                                dateStyle = "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-450";
+                                relativeText = " (Done)";
+                            } else {
+                                dateStyle = "bg-red-50 text-red-600 dark:bg-red-950/35 dark:text-red-400 font-bold border border-red-500/15";
+                                relativeText = " (Overdue!)";
+                            }
+                        } else if (card.dueDate === nowDay) {
+                            dateStyle = "bg-amber-50 text-amber-600 dark:bg-amber-950/35 dark:text-amber-400 font-semibold";
+                            relativeText = " (Today)";
+                        }
+
+                        calendarBadge = `
+                            <span class="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md ${dateStyle}">
+                                <i class="fa-regular fa-calendar text-xs"></i>
+                                ${formatted}${relativeText}
+                            </span>
+                        `;
+                    }
+
+                    // Compute Subtask Accomplishment percentages
+                    let subMeterHTML = '';
+                    if (card.subtasks && card.subtasks.length > 0) {
+                        const subCount = card.subtasks.length;
+                        const doneCount = card.subtasks.filter(s => s.completed).length;
+                        const subPercent = Math.round((doneCount / subCount) * 100);
+                        
+                        const meterColor = subPercent === 100 ? "bg-emerald-500" : "bg-indigo-500";
+                        subMeterHTML = `
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-[10px] text-slate-500/90 font-medium">
+                                    <span class="flex items-center gap-1">
+                                        <i class="fa-solid fa-list-check"></i> Subtasks
+                                    </span>
+                                    <span>${doneCount}/${subCount} (${subPercent}%)</span>
+                                </div>
+                                <div class="w-full bg-slate-100 dark:bg-slate-900 h-1 rounded-full overflow-hidden">
+                                    <div class="${meterColor} h-1 rounded-full transition-all duration-300" style="width: ${subPercent}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Render inline Tag pills
+                    let tagPillsHTML = '';
+                    if (card.tags && card.tags.length > 0) {
+                        tagPillsHTML = `<div class="flex flex-wrap gap-1">`;
+                        card.tags.forEach(tag => {
+                            tagPillsHTML += `<span class="px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-850 rounded border border-slate-200/10">${tag}</span>`;
+                        });
+                        tagPillsHTML += `</div>`;
+                    }
+
+                    // Assemble the Card DOM
+                    cardItemNode.innerHTML = `
+                        <!-- Card Header pills & buttons -->
+                        <div class="flex items-center justify-between pointer-events-none">
+                            <span class="text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full border ${prioColorClass}">
+                                ${card.priority}
+                            </span>
+                            
+                            <button class="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition duration-150 p-0.5">
+                                <i class="fa-solid fa-pencil text-[10px]"></i>
+                            </button>
+                        </div>
+
+                        <!-- Card Body details structure -->
+                        <div class="space-y-1 pointer-events-none">
+                            <h4 class="font-bold text-sm text-slate-800 dark:text-white leading-tight break-words group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                                ${card.title}
+                            </h4>
+                            <p class="text-[12px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed break-words">
+                                ${card.description ? card.description : '<em class="text-slate-400 dark:text-slate-650">No details configured.</em>'}
+                            </p>
+                        </div>
+
+                        <!-- Mini tag outline pills row -->
+                        ${tagPillsHTML}
+
+                        <!-- Horizontal break line conditionally if metadata exists -->
+                        ${(calendarBadge || subMeterHTML) ? '<hr class="border-slate-100 dark:border-slate-900/60 my-0.5">' : ''}
+
+                        <!-- Foot indicators row -->
+                        <div class="flex items-center justify-between gap-2 pointer-events-none">
+                            ${calendarBadge}
+                            <div class="flex-grow"></div>
+                        </div>
+
+                        ${subMeterHTML}
+                    `;
+
+                    cardListNode.appendChild(cardItemNode);
+                });
+
+                // Build Column adding card footer CTA
+                const colFooterNode = document.createElement('div');
+                colFooterNode.className = "px-4.5 py-3.5 border-t border-slate-100 dark:border-slate-800/30 shrink-0";
+                colFooterNode.innerHTML = `
+                    <button onclick="openCreateCardModal('${column.id}')" class="w-full py-2 bg-slate-200/40 hover:bg-slate-200/70 dark:bg-slate-800/20 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-plus text-xs"></i> Add deliverables
+                    </button>
+                `;
+
+                // Combining Column blocks
+                colNode.appendChild(headerNode);
+                colNode.appendChild(cardListNode);
+                colNode.appendChild(colFooterNode);
+
+                parent.appendChild(colNode);
+            });
+
+            // "Add a column Stage" Button Component at the tail-end
+            const addColCTA = document.createElement('div');
+            addColCTA.className = "flex-shrink-0 w-80 rounded-2xl p-4.5 bg-white/20 dark:bg-slate-950/20 hover:bg-white/30 dark:hover:bg-slate-950/30 border border-dashed border-white/35 dark:border-slate-800/50 flex flex-col gap-3 transition duration-250";
+            
+            addColCTA.innerHTML = `
+                <div id="addColFormCollapse" onclick="expandNewColForm(true)" class="cursor-pointer py-2.5 text-center text-white/90 hover:text-white dark:text-slate-300 dark:hover:text-white text-sm font-bold flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-plus"></i> Create New Stage
+                </div>
+                <div id="addColFormDetails" class="hidden flex flex-col gap-2.5">
+                    <input type="text" id="newColumnTitleInput" onkeypress="handleNewColumnKey(event)" placeholder="Title, e.g. QA testing stage..." class="w-full px-3 py-1.8 text-xs rounded-xl border border-white/20 dark:border-slate-800 bg-white/95 dark:bg-slate-950 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex gap-2">
+                        <button onclick="createNewStageList()" class="flex-grow py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition">Create Stage</button>
+                        <button onclick="expandNewColForm(false)" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg transition">Cancel</button>
+                    </div>
+                </div>
+            `;
+            parent.appendChild(addColCTA);
+
+            // Reinitialize Drag-and-drop Sortable hooks
+            initSortable();
+            renderStats();
+        }
+
+        // Expanded column stage form CTA toggle
+        function expandNewColForm(flag) {
+            const collapse = document.getElementById('addColFormCollapse');
+            const details = document.getElementById('addColFormDetails');
+            if (flag) {
+                collapse.classList.add('hidden');
+                details.classList.remove('hidden');
+                document.getElementById('newColumnTitleInput').focus();
+            } else {
+                collapse.classList.remove('hidden');
+                details.classList.add('hidden');
+                document.getElementById('newColumnTitleInput').value = '';
+            }
+        }
+
+        // Hooking SortableJS modules dynamically
+        function initSortable() {
+            // Drag-and-drop columns arrangement sort logic
+            const colsContainer = document.getElementById('board-columns');
+            if (colsContainer) {
+                const colSort = new Sortable(colsContainer, {
+                    group: 'columns',
+                    animation: 180,
+                    handle: '.column-drag-handle',
+                    ghostClass: 'column-ghost',
+                    chosenClass: 'column-chosen',
+                    onEnd: function() {
+                        saveBoardStateFromDOM();
+                    }
+                });
+                activeSortableInstances.push(colSort);
+            }
+
+            // Drag-and-drop card elements rearrange logic
+            const listPanels = document.querySelectorAll('.card-list');
+            listPanels.forEach(panel => {
+                const cardSort = new Sortable(panel, {
+                    group: 'cards',
+                    animation: 150,
+                    ghostClass: 'card-ghost',
+                    chosenClass: 'card-chosen',
+                    dragClass: 'sortable-drag',
+                    onEnd: function() {
+                        saveBoardStateFromDOM();
+                    }
+                });
+                activeSortableInstances.push(cardSort);
+            });
+        }
+
+        // Inline naming click elements toggle
+        function enterInlineColRename(colId) {
+            const disp = document.getElementById(`colTitleDisplay-${colId}`);
+            const input = document.getElementById(`colTitleInput-${colId}`);
+            if (disp && input) {
+                disp.classList.add('hidden');
+                input.classList.remove('hidden');
+                input.focus();
+                // Select output text content
+                input.select();
+            }
+        }
+
+        function saveInlineColRename(colId) {
+            const disp = document.getElementById(`colTitleDisplay-${colId}`);
+            const input = document.getElementById(`colTitleInput-${colId}`);
+            if (disp && input) {
+                const newVal = input.value.trim();
+                if (newVal) {
+                    disp.innerText = newVal;
+                    // Update current dataset
+                    const matched = boardData.columns.find(c => c.id === colId);
+                    if (matched) matched.title = newVal;
+                    saveBoardState();
+                }
+                disp.classList.remove('hidden');
+                input.classList.add('hidden');
+                // Ensure layout details stay in sync
+                saveBoardStateFromDOM();
+                renderBoard();
+            }
+        }
+
+        function handleColRenameKey(colId, e) {
+            if (e.key === 'Enter') {
+                saveInlineColRename(colId);
+            }
+        }
+
+        // Stage Options popover menus
+        function toggleColDropdown(colId) {
+            const menu = document.getElementById(`colMenuDropdown-${colId}`);
+            const isHidden = menu.classList.contains('hidden');
+            
+            // Hide all lists options menu first
+            document.querySelectorAll('[id^="colMenuDropdown-"]').forEach(m => m.classList.add('hidden'));
+
+            if (isHidden) {
+                menu.classList.remove('hidden');
+            }
+        }
+
+        // Close stage drop on user click layout limits
+        window.addEventListener('mousedown', (e) => {
+            const matchedColMenu = e.target.closest('[id^="colMenuDropdown-"]');
+            const matchedBtnMenu = e.target.closest('[id^="colMenuBtn-"]');
+            if (!matchedColMenu && !matchedBtnMenu) {
+                document.querySelectorAll('[id^="colMenuDropdown-"]').forEach(m => m.classList.add('hidden'));
+            }
+        });
+
+        // Stage Options Actions
+        function clearStageCards(colId) {
+            if (confirm("Are you sure you want to empty all deliverables inside this column stage? This cannot be undone.")) {
+                const colMatched = boardData.columns.find(c => c.id === colId);
+                if (colMatched) {
+                    // Delete details reference in memory master map
+                    colMatched.cardIds.forEach(id => {
+                        delete boardData.cards[id];
+                    });
+                    colMatched.cardIds = [];
+                    saveBoardState();
+                    renderBoard();
+                }
+            }
+        }
+
+        function deleteColumnAction(colId) {
+            if (confirm("Are you sure you want to fully delete this stage? Tasks associated will be deleted permanently.")) {
+                const colIndex = boardData.columns.findIndex(c => c.id === colId);
+                if (colIndex > -1) {
+                    // Extract referenced cards and clean memory
+                    const colMatched = boardData.columns[colIndex];
+                    colMatched.cardIds.forEach(id => {
+                        delete boardData.cards[id];
+                    });
+                    boardData.columns.splice(colIndex, 1);
+                    saveBoardState();
+                    renderBoard();
+                }
+            }
+        }
+
+        function sortStageCardsByDueDate(colId) {
+            const col = boardData.columns.find(c => c.id === colId);
+            if (!col) return;
+
+            col.cardIds.sort((a, b) => {
+                const cardA = boardData.cards[a];
+                const cardB = boardData.cards[b];
+                
+                // Keep cards without dates at the bottom
+                if (!cardA.dueDate) return 1;
+                if (!cardB.dueDate) return -1;
+                
+                return cardA.dueDate.localeCompare(cardB.dueDate);
+            });
+
+            saveBoardState();
+            renderBoard();
+        }
+
+        function sortStageCardsByPriority(colId) {
+            const col = boardData.columns.find(c => c.id === colId);
+            if (!col) return;
+
+            const weight = { 'high': 3, 'medium': 2, 'low': 1 };
+            col.cardIds.sort((a, b) => {
+                const cardA = boardData.cards[a];
+                const cardB = boardData.cards[b];
+                return (weight[cardB.priority] || 0) - (weight[cardA.priority] || 0);
+            });
+
+            saveBoardState();
+            renderBoard();
+        }
+
+        // New Column Stage Creation Logic
+        function handleNewColumnKey(e) {
+            if (e.key === 'Enter') {
+                createNewStageList();
+            }
+        }
+
+        function createNewStageList() {
+            const val = document.getElementById('newColumnTitleInput').value.trim();
+            if (!val) return;
+
+            const id = "col-" + Date.now();
+            boardData.columns.push({
+                id: id,
+                title: val,
+                cardIds: []
+            });
+
+            saveBoardState();
+            renderBoard();
+            expandNewColForm(false);
+            
+            // Scroll right to view new column
+            setTimeout(() => {
+                const container = document.getElementById('boardBackdrop');
+                if (container) {
+                    container.scrollLeft = container.scrollWidth;
+                }
+            }, 100);
+        }
+
+        // CREATE NEW CARD ACTION FLOWS
+        function openCreateCardModal(columnId) {
+            activeModalCardId = null;
+            activeModalCardColumnId = columnId;
+            tempModalSubtasks = [];
+            curModalPriority = 'medium';
+
+            document.getElementById('modalMainHeading').innerText = "Create New Deliverable";
+            document.getElementById('modalCardTitle').value = '';
+            document.getElementById('modalCardDescription').value = '';
+            document.getElementById('modalCardDueDate').value = '';
+            document.getElementById('modalCardTags').value = '';
+            document.getElementById('newSubtaskTextInput').value = '';
+
+            // Hide delete button for new creations
+            document.getElementById('modalDeleteBtn').classList.add('hidden');
+
+            setModalPriorityRaw('medium');
+            renderModalSubtasks();
+            toggleModalDisplay(true);
+        }
+
+        // EDIT INTEGRATED CARD ACTION FLOWS
+        function openEditCardModal(cardId, columnId) {
+            const card = boardData.cards[cardId];
+            if (!card) return;
+
+            activeModalCardId = cardId;
+            activeModalCardColumnId = columnId;
+            
+            // Deep clone tasks sub-array
+            tempModalSubtasks = card.subtasks ? JSON.parse(JSON.stringify(card.subtasks)) : [];
+            curModalPriority = card.priority ? card.priority : 'medium';
+
+            document.getElementById('modalMainHeading').innerText = "Configure Sprint Deliverable Spec";
+            document.getElementById('modalCardTitle').value = card.title || '';
+            document.getElementById('modalCardDescription').value = card.description || '';
+            document.getElementById('modalCardDueDate').value = card.dueDate || '';
+            document.getElementById('modalCardTags').value = card.tags ? card.tags.join(', ') : '';
+            document.getElementById('newSubtaskTextInput').value = '';
+
+            // Display delete btn because it's edit mode
+            document.getElementById('modalDeleteBtn').classList.remove('hidden');
+
+            setModalPriorityRaw(curModalPriority);
+            renderModalSubtasks();
+            toggleModalDisplay(true);
+        }
+
+        // Force stop default event propagation to allow opening cards details without dragging conflicts
+        window.addEventListener('mousedown', (e) => {
+            const matchedCardItem = e.target.closest('.card-item');
+            if (matchedCardItem) {
+                // Focus element safely
+            }
+        });
+
+        // Close details edit modal dialog
+        function closeCardModal() {
+            toggleModalDisplay(false);
+        }
+
+        // Toggle animation details classes
+        function toggleModalDisplay(open) {
+            const modal = document.getElementById('cardModal');
+            const inner = modal.querySelector('.bg-white');
+            if (open) {
+                modal.classList.remove('pointer-events-none');
+                modal.classList.add('opacity-100');
+                inner.classList.remove('translate-y-4');
+                inner.classList.add('translate-y-0');
+            } else {
+                modal.classList.add('pointer-events-none');
+                modal.classList.remove('opacity-100');
+                inner.classList.remove('translate-y-0');
+                inner.classList.add('translate-y-4');
+            }
+        }
+
+        // Radio selector priorities
+        function setModalPriorityRaw(prio) {
+            curModalPriority = prio;
+            
+            // Remove selection styles first
+            document.querySelectorAll('.prio-select-btn').forEach(btn => {
+                btn.className = btn.className.replace(/\bbg-[a-z]+-[0-9]+\b/g, '');
+                btn.className = btn.className.replace(/\btext-[a-z]+-[0-9]+\b/g, '');
+                btn.classList.remove('border-red-500', 'border-amber-500', 'border-emerald-500', 'bg-slate-50', 'dark:bg-slate-850');
+            });
+
+            const target = document.getElementById(`prioBtn-${prio}`);
+            if (target) {
+                if (prio === 'high') {
+                    target.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-950/40', 'text-red-600', 'dark:text-red-400');
+                } else if (prio === 'medium') {
+                    target.classList.add('border-amber-500', 'bg-amber-50', 'dark:bg-amber-950/40', 'text-amber-600', 'dark:text-amber-400');
+                } else if (prio === 'low') {
+                    target.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-950/40', 'text-emerald-600', 'dark:text-emerald-400');
+                }
+            }
+        }
+
+        // RENDER MODAL CHECKLIST CRITERIA
+        function renderModalSubtasks() {
+            const listEl = document.getElementById('modalSubtasksList');
+            if (!listEl) return;
+
+            listEl.innerHTML = '';
+
+            let completed = 0;
+            const total = tempModalSubtasks.length;
+
+            tempModalSubtasks.forEach((sub, i) => {
+                if (sub.completed) completed++;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between gap-2.5 py-1.5 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950/50 transition";
+                
+                row.innerHTML = `
+                    <div class="flex items-center gap-2.5 flex-grow">
+                        <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="toggleModalSubtask(${i})" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer h-4 w-4">
+                        <span class="text-xs ${sub.completed ? 'line-through text-slate-400 dark:text-slate-600' : 'text-slate-700 dark:text-slate-300'} break-all font-medium">${sub.text}</span>
+                    </div>
+                    <button onclick="deleteModalSubtaskRow(${i})" class="text-slate-400 hover:text-red-500 transition px-1.5">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                `;
+                listEl.appendChild(row);
+            });
+
+            // Recompute fraction meter
+            setValueToId('modalSubtasksFraction', `${completed}/${total} completed`);
+            const bar = document.getElementById('modalSubtasksProgressBar');
+            if (bar) {
+                const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                bar.style.width = `${rate}%`;
+            }
+        }
+
+        function toggleModalSubtask(index) {
+            if (tempModalSubtasks[index]) {
+                tempModalSubtasks[index].completed = !tempModalSubtasks[index].completed;
+                renderModalSubtasks();
+            }
+        }
+
+        function deleteModalSubtaskRow(index) {
+            tempModalSubtasks.splice(index, 1);
+            renderModalSubtasks();
+        }
+
+        function handleNewSubtaskKeypress(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addModalSubtaskFromInput();
+            }
+        }
+
+        function addModalSubtaskFromInput() {
+            const input = document.getElementById('newSubtaskTextInput');
+            const txt = input.value.trim();
+            if (!txt) return;
+
+            tempModalSubtasks.push({
+                id: "sub-" + Date.now() + iRandom(),
+                text: txt,
+                completed: false
+            });
+
+            input.value = '';
+            renderModalSubtasks();
+            input.focus();
+        }
+
+        function iRandom() {
+            return Math.floor(Math.random() * 1000);
+        }
+
+        // SAVE DIALOG TASK TO LOCAL STORAGE PERSISTENCE CODES
+        function saveModalActiveTask() {
+            const title = document.getElementById('modalCardTitle').value.trim();
+            if (!title) {
+                alert("Please provide a valid non-empty deliverable name for this task.");
+                return;
+            }
+
+            const desc = document.getElementById('modalCardDescription').value.trim();
+            const dueDate = document.getElementById('modalCardDueDate').value;
+            const tagsRaw = document.getElementById('modalCardTags').value;
+            
+            // Resolve tags token formatting
+            const tags = tagsRaw.split(',')
+                                .map(t => t.trim())
+                                .filter(t => t.length > 0);
+
+            if (activeModalCardId) {
+                // UPDATE PRE-EXISTING CARD IN MAP
+                boardData.cards[activeModalCardId].title = title;
+                boardData.cards[activeModalCardId].description = desc;
+                boardData.cards[activeModalCardId].priority = curModalPriority;
+                boardData.cards[activeModalCardId].dueDate = dueDate;
+                boardData.cards[activeModalCardId].tags = tags;
+                boardData.cards[activeModalCardId].subtasks = tempModalSubtasks;
+            } else {
+                // CREATE A NEW NOVEL DELIVERABLE OBJECT IN MAP
+                const newId = "task-" + Date.now();
+                boardData.cards[newId] = {
+                    id: newId,
+                    title: title,
+                    description: desc,
+                    priority: curModalPriority,
+                    dueDate: dueDate,
+                    tags: tags,
+                    subtasks: tempModalSubtasks
+                };
+
+                // Link reference elements inside target columns array
+                const col = boardData.columns.find(c => c.id === activeModalCardColumnId);
+                if (col) {
+                    col.cardIds.push(newId);
+                }
+            }
+
+            saveBoardState();
+            renderBoard();
+            closeCardModal();
+        }
+
+        // DELETE REGISTERED MODAL ACTIVE TASK
+        function deleteModalActiveTask() {
+            if (!activeModalCardId) return;
+
+            if (confirm("Are you absolutely sure you want to permanently delete this task? This operation is irreversible.")) {
+                // Scrub details in map first
+                delete boardData.cards[activeModalCardId];
+
+                // Unlink in column stage lists references
+                boardData.columns.forEach(col => {
+                    col.cardIds = col.cardIds.filter(id => id !== activeModalCardId);
+                });
+
+                saveBoardState();
+                renderBoard();
+                closeCardModal();
+            }
+        }
+
+        // EXPORT JSON STATE
+        function exportBoardState() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(boardData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href",     dataStr     );
+            dlAnchorElem.setAttribute("download", "code-studio-kanban-backup.json");
+            dlAnchorElem.click();
+        }
+
+        // TRIGGER IMPORT STATE
+        function importBoardStateTrigger() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function handleFileImport(event) {
+            const input = event.target;
+            if (!input.files || input.files.length === 0) return;
+
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function() {
+                try {
+                    const parsed = JSON.parse(reader.result);
+                    if (parsed.columns && parsed.cards) {
+                        boardData = parsed;
+                        saveBoardState();
+                        applyThemeBackdrop();
+                        applyDarkModeStyle();
+                        renderBoard();
+                        alert("Board configuration loaded successfully!");
+                    } else {
+                        alert("Invalid file format. Ensure columns and cards definitions reside in JSON root Schema bounds.");
+                    }
+                } catch (e) {
+                    alert("Failure decoding JSON configuration metadata elements: " + e.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
