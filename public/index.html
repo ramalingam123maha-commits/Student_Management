@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SyncSpace - Collaborative Task Manager</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">⚡</div>
+        <div>
+          <h2>SyncSpace</h2>
+          <small>Collaborative Workspaces</small>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <span class="section-title">Views</span>
+        <nav class="nav-links">
+          <button class="nav-btn active" data-view="kanban">
+            <span>📋</span> Kanban Board
+          </button>
+          <button class="nav-btn" data-view="list">
+            <span>📝</span> All Tasks (List)
+          </button>
+          <button class="nav-btn" data-view="team">
+            <span>👥</span> Team Workload
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <span class="section-title">Priority Filters</span>
+        <div class="filter-links">
+          <button class="filter-pill" onclick="applyPriorityFilter('')">All Priorities</button>
+          <button class="filter-pill priority-urgent" onclick="applyPriorityFilter('Urgent')">Urgent</button>
+          <button class="filter-pill priority-high" onclick="applyPriorityFilter('High')">High</button>
+          <button class="filter-pill priority-medium" onclick="applyPriorityFilter('Medium')">Medium</button>
+          <button class="filter-pill priority-low" onclick="applyPriorityFilter('Low')">Low</button>
+        </div>
+      </div>
+
+      <div class="user-profile">
+        <div class="avatar" id="activeUserAvatar">DW</div>
+        <div class="profile-info">
+          <strong id="activeUserName">Devon Wells</strong>
+          <small>Lead Architect</small>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div>
+          <h1 id="viewHeading">Project Kanban Board</h1>
+          <p class="sub-text">Create, assign, prioritize, and collaborate in real-time</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-wrap">
+            <span>🔍</span>
+            <input type="text" id="taskSearchInput" placeholder="Search tasks, descriptions, tags...">
+          </div>
+          <button class="btn btn-primary" onclick="openCreateModal()">+ Create Task</button>
+        </div>
+      </header>
+
+      <!-- KPI Summary Header -->
+      <div class="kpi-row">
+        <div class="kpi-box">
+          <span class="label">Total Tasks</span>
+          <h3 id="statTotal">0</h3>
+        </div>
+        <div class="kpi-box">
+          <span class="label">In Progress</span>
+          <h3 id="statInProgress">0</h3>
+        </div>
+        <div class="kpi-box">
+          <span class="label">Review Stage</span>
+          <h3 id="statReview">0</h3>
+        </div>
+        <div class="kpi-box">
+          <span class="label">Completed</span>
+          <h3 id="statCompleted">0</h3>
+        </div>
+      </div>
+
+      <!-- VIEW: KANBAN BOARD -->
+      <section id="view-kanban" class="workspace-view active">
+        <div class="kanban-board">
+          <!-- TO DO -->
+          <div class="kanban-lane" data-status="To Do">
+            <div class="lane-header">
+              <span class="lane-title">📌 To Do</span>
+              <span class="count-badge" id="count-todo">0</span>
+            </div>
+            <div class="lane-body" id="lane-todo"></div>
+          </div>
+
+          <!-- IN PROGRESS -->
+          <div class="kanban-lane" data-status="In Progress">
+            <div class="lane-header">
+              <span class="lane-title">⏳ In Progress</span>
+              <span class="count-badge" id="count-progress">0</span>
+            </div>
+            <div class="lane-body" id="lane-progress"></div>
+          </div>
+
+          <!-- REVIEW -->
+          <div class="kanban-lane" data-status="Review">
+            <div class="lane-header">
+              <span class="lane-title">👀 Review</span>
+              <span class="count-badge" id="count-review">0</span>
+            </div>
+            <div class="lane-body" id="lane-review"></div>
+          </div>
+
+          <!-- COMPLETED -->
+          <div class="kanban-lane" data-status="Completed">
+            <div class="lane-header">
+              <span class="lane-title">✅ Completed</span>
+              <span class="count-badge" id="count-completed">0</span>
+            </div>
+            <div class="lane-body" id="lane-completed"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: LIST TABLE -->
+      <section id="view-list" class="workspace-view">
+        <div class="panel-box">
+          <div class="table-container">
+            <table class="task-table">
+              <thead>
+                <tr>
+                  <th>Task Title</th>
+                  <th>Assignee</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Due Date</th>
+                  <th>Comments</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="taskTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: TEAM WORKLOAD -->
+      <section id="view-team" class="workspace-view">
+        <div class="team-grid" id="teamWorkloadGrid"></div>
+      </section>
+    </main>
+
+    <!-- TASK DETAIL DRAWER -->
+    <aside class="detail-drawer" id="detailDrawer">
+      <div class="drawer-header">
+        <span class="drawer-tag" id="drawerTaskId">TSK-000</span>
+        <button class="btn-close" onclick="closeDrawer()">✕</button>
+      </div>
+      <div class="drawer-body" id="drawerBody">
+        <h2 id="drawerTitle">Task Title</h2>
+        <p class="drawer-desc" id="drawerDesc"></p>
+
+        <div class="meta-section">
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <select id="drawerStatusSelect" onchange="updateDrawerTaskStatus()"></select>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Priority</span>
+            <select id="drawerPrioritySelect" onchange="updateDrawerTaskPriority()">
+              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Assignee</span>
+            <select id="drawerAssigneeSelect" onchange="updateDrawerTaskAssignee()"></select>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Deadline</span>
+            <input type="date" id="drawerDueDate" onchange="updateDrawerTaskDueDate()">
+          </div>
+        </div>
+
+        <div class="tags-section">
+          <span class="meta-label">Tags</span>
+          <div class="tag-pills" id="drawerTags"></div>
+        </div>
+
+        <!-- Collaborative Comments -->
+        <div class="comments-section">
+          <h3>💬 Discussion & Collaboration</h3>
+          <div class="comment-list" id="drawerComments"></div>
+
+          <form id="commentForm" onsubmit="submitComment(event)" class="comment-form">
+            <textarea id="commentInput" rows="2" placeholder="Write a collaborative note or feedback..." required></textarea>
+            <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+          </form>
+        </div>
+
+        <!-- Activity Audit Log -->
+        <div class="activity-section">
+          <h3>📜 Activity Log</h3>
+          <ul class="activity-list" id="drawerActivity"></ul>
+        </div>
+
+        <div class="drawer-footer">
+          <button class="btn btn-danger btn-sm" onclick="deleteCurrentDrawerTask()">Delete Task</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MODAL: CREATE TASK -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Create New Task</h3>
+        <button class="btn-close" onclick="closeCreateModal()">✕</button>
+      </div>
+      <form id="createTaskForm" onsubmit="handleCreateTask(event)" class="modal-form">
+        <div class="form-group">
+          <label>Task Title *</label>
+          <input type="text" id="newTaskTitle" required placeholder="e.g. Implement OAuth2 Refresh Flow">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="newTaskDesc" rows="3" placeholder="Acceptance criteria, context, or edge cases"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="newTaskPriority">
+              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Due Date / Deadline *</label>
+            <input type="date" id="newTaskDueDate" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Assignee</label>
+            <select id="newTaskAssignee" required></select>
+          </div>
+          <div class="form-group">
+            <label>Tags (Comma separated)</label>
+            <input type="text" id="newTaskTags" placeholder="Frontend, API, Bug">
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn btn-outline" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create & Assign Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="notification-toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
