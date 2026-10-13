@@ -1,0 +1,13 @@
+{
+  "name": "collab-task-manager",
+  "version": "1.0.0",
+  "description": "Collaborative Task Manager Application with Priority Levels, Deadlines, Status Updates, and Team Collaboration Features",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
